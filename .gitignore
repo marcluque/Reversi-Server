@@ -1,0 +1,8 @@
+###############
+##   CLion   ##
+###############
+
+.idea/
+*.iml
+*.iws
+cmake-build-debug/
