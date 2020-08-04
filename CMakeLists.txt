@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.16)
+project(reversi_server C)
+
+set(CMAKE_C_STANDARD 99)
+
+include_directories(libs/uthash/include)
+
+add_executable(reversi_server
+        src/main.c
+        src/network/server.c
+        src/network/server.h
+        src/map/map.c
+        src/map/map.h
+        src/map/map_util.h
+        src/globals.h
+        libs/uthash/include/uthash.h)
+
+target_link_libraries(reversi_server -static-libgcc -static-libstdc++)
