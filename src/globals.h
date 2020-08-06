@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <libgen.h>
 
 #include <sys/socket.h>
 #include <sys/queue.h>

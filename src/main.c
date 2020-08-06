@@ -1,6 +1,7 @@
 #include "globals.h"
 #include "network/server.h"
 #include "map/map.h"
+#include "map/map_loader.h"
 
 // Main
 int main(int argc, char* argv[]) {
@@ -26,23 +27,23 @@ int main(int argc, char* argv[]) {
 
     // Check validity of input
     if (mapName == NULL) {
-        fprintf(stderr, RED "mapName is required!" RESET "\n");
+        fprintf(stderr, RED "-map is required!" RESET "\n");
         exit(1);
     }
 
     if (timeLimit == -1 && depthLimit == -1) {
-        fprintf(stderr, RED "timeLimit or depthLimit is required!" RESET "\n");
+        fprintf(stderr, RED "-timeLimit or -depthLimit is required!" RESET "\n");
         exit(1);
     } else if (timeLimit < 0.2) {
         fprintf(stderr, RED "timeLimit has to be >= 0.2!" RESET "\n");
         exit(1);
     }
 
-    // Print server settings
-
+    // Load map
+    map = processMap(argv[0], mapName);
 
     // On start-up the server waits for the required number of players to join the server
-    startServer(hostAddress, port);
+    //startServer(hostAddress, port);
 
     return 0;
 }
