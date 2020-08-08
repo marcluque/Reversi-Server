@@ -1,3 +1,4 @@
+#include <zconf.h>
 #include "globals.h"
 #include "network/server.h"
 #include "map/map.h"
@@ -6,18 +7,18 @@
 // Main
 int main(int argc, char* argv[]) {
     char* mapName = NULL;
-    char* hostAddress = "127.0.0.1";
-    int port = 8080;
-    double timeLimit = -1;
-    int depthLimit = -1;
+    char* host = "127.0.0.1";
+    char* port = "8080";
+    int timeLimit = 0;
+    int depthLimit = 0;
 
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i], "-map") == 0 || strcmp(argv[i], "--map") == 0) {
             mapName = argv[i + 1];
         } else if (strcmp(argv[i], "-host") == 0 || strcmp(argv[i], "--host") == 0) {
-            hostAddress = argv[i + 1];
+            host = argv[i + 1];
         } else if (strcmp(argv[i], "-port") == 0 || strcmp(argv[i], "--port") == 0) {
-            port = (int) strtol(argv[i + 1], NULL, 10);
+            port = argv[i + 1];
         } else if (strcmp(argv[i], "-timeLimit") == 0 || strcmp(argv[i], "--timeLimit") == 0) {
             timeLimit = (int) strtod(argv[i + 1], NULL);
         } else if (strcmp(argv[i], "-depthLimit") == 0 || strcmp(argv[i], "--depthLimit") == 0) {
@@ -31,7 +32,7 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    if (timeLimit == -1 && depthLimit == -1) {
+    if (timeLimit == 0 && depthLimit == 0) {
         fprintf(stderr, RED "-timeLimit or -depthLimit is required!" RESET "\n");
         exit(1);
     } else if (timeLimit < 0.2) {
@@ -39,11 +40,29 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
+    // Calculate timeLimit from seconds to milliseconds
+    timeLimit *= 1000;
+
     // Load map
-    map = processMap(argv[0], mapName);
+    char* mapString = map_loader_processMap(argv[0], mapName);
+    printf("Successfully parsed map!\n");
+    fflush(stdout);
 
     // On start-up the server waits for the required number of players to join the server
-    //startServer(hostAddress, port);
+    //server_startServer(host, port);
+
+    server_initServer(host, port, timeLimit, depthLimit);
+    server_acceptConnections();
+
+    server_sendMapData(mapString);
+    server_sendPlayerNumber();
+
+    server_startGame();
+
+    map_cleanUp();
+    server_cleanUp();
+
+    while (1);
 
     return 0;
 }

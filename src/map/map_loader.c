@@ -6,14 +6,13 @@
 
 const int MAX_LINE_LENGTH = 512;
 
-char** processMap(char* baseDir, const char* mapName) {
+char* map_loader_processMap(char* baseDir, const char* mapName) {
     char* infix = "/";
-    char* path = malloc(1 + strlen(baseDir) + strlen(infix) + strlen(mapName));
+    char path[1 + strlen(baseDir) + strlen(infix) + strlen(mapName)];
     strcpy(path, dirname(baseDir));
     strcat(path, infix);
     strcat(path, mapName);
     FILE* file = fopen(path, "r");
-    free(path);
 
     if (file == NULL) {
         fprintf(stderr, RED "Couldn't open file %s!" RESET "\n", mapName);
@@ -28,6 +27,8 @@ char** processMap(char* baseDir, const char* mapName) {
         exit(1);
     }
     NUM_PLAYERS = playerToInt(buffer[0]);
+    numberOfStones = malloc(sizeof(int) * (NUM_PLAYERS + 1));
+    // TODO: COUNT HOW MANY STONES A PLAYER HAS
 
     // Override stones
     fgets(buffer, sizeof(buffer), file);
@@ -39,6 +40,10 @@ char** processMap(char* baseDir, const char* mapName) {
     memcpy(overrides, &buffer, counter);
     overrides[counter] = '\0';
     NUM_OVERRIDE = (int) strtol(overrides, NULL, 10);
+    numberOfOverride = malloc(sizeof(int) * (NUM_PLAYERS + 1));
+    for (int i = 0; i < NUM_PLAYERS; ++i) {
+        numberOfOverride[i] = NUM_OVERRIDE;
+    }
 
     // Bombs amount
     fgets(buffer, sizeof(buffer), file);
@@ -50,6 +55,10 @@ char** processMap(char* baseDir, const char* mapName) {
     memcpy(bombs, &buffer, counter);
     bombs[counter] = '\0';
     NUM_BOMBS = (int) strtol(bombs, NULL, 10);
+    numberOfBombs = malloc(sizeof(int) * (NUM_PLAYERS + 1));
+    for (int i = 0; i < NUM_PLAYERS; ++i) {
+        numberOfBombs[i] = NUM_BOMBS;
+    }
 
     // Bombs radius
     int newCounter = counter;
@@ -84,7 +93,7 @@ char** processMap(char* baseDir, const char* mapName) {
     MAP_WIDTH = (int) strtol(width, NULL, 10);
 
     // Game map
-    char** map = (char**) malloc(MAP_HEIGHT * sizeof(char*));
+    map = (char**) malloc(MAP_HEIGHT * sizeof(char*));
     for (int i = 0; i < MAP_HEIGHT; i++) {
         map[i] = (char*) malloc(MAP_WIDTH * sizeof(char));
     }
@@ -96,6 +105,7 @@ char** processMap(char* baseDir, const char* mapName) {
             if (buffer[j] == '\n') {
                 break;
             } else if (buffer[j] != ' ') {
+                numberOfStones[playerToInt(buffer[j])] += isTilePlayer(buffer[j]);
                 map[i][colCount] = buffer[j];
                 colCount++;
             }
@@ -129,7 +139,23 @@ char** processMap(char* baseDir, const char* mapName) {
         tableAddTransitionPair(&key, &value);
     }
 
+    // Store whole file in a string
+    fseek(file, 0L, SEEK_SET);
+    fseek(file, 0L, SEEK_END);
+    long numberOfBytes = ftell(file);
+    fseek(file, 0L, SEEK_SET);
+
+    char* mapString = malloc(sizeof(char) * numberOfBytes);
+
+    if (mapString == NULL) {
+        fprintf(stdout, RED "Error while allocating memory for map\n" RESET);
+        exit(1);
+    }
+
+    fread(mapString, sizeof(char), numberOfBytes, file);
+
     fclose(file);
 
-    return map;
+    // Dont't free mapString
+    return mapString;
 }

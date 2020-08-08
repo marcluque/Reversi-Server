@@ -7,7 +7,8 @@
 
 #include "../globals.h"
 #include "map_util.h"
+#include "map.h"
 
-char** processMap(char* baseDir, const char* mapName);
+char* map_loader_processMap(char* baseDir, const char* mapName);
 
 #endif //REVERSI_SERVER_MAP_LOADER_H

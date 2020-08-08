@@ -37,7 +37,7 @@ bool walkPath(int startX, int startY, int direction, char player) {
            && (startX != x || startY != y);
 }
 
-bool isMoveValid(int x, int y, char player, bool returnEarly, bool override, int phase) {
+bool map_isMoveValid(int x, int y, char player, bool returnEarly, bool override, int phase) {
     if (isTileHole(map[y][x])) {
         return false;
     }
@@ -68,4 +68,15 @@ bool isMoveValid(int x, int y, char player, bool returnEarly, bool override, int
         // Check basic invalidity for elimination phase
         return numberOfBombs[playerToInt(player)] > 0;
     }
+}
+
+void map_cleanUp() {
+    for (int i = 0; i < MAP_HEIGHT; ++i) {
+        free(map[i]);
+    }
+    free(map);
+
+    free(numberOfStones);
+    free(numberOfBombs);
+    free(numberOfOverride);
 }
