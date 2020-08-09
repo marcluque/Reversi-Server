@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     server_sendMapData(mapString);
     server_sendPlayerNumber();
 
-    server_startGame();
+    server_startPhase(1);
 
     map_cleanUp();
     server_cleanUp();

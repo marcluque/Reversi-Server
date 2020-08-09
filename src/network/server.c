@@ -7,8 +7,6 @@
 #include "server.h"
 #include "../map/map.h"
 
-
-
 //// Variables
 //////////////
 int fdCount;
@@ -18,8 +16,6 @@ char* port;
 int connectionLimit;
 int timeLimit;
 int depthLimit;
-
-
 
 //// Private funtions
 /////////////////////
@@ -107,13 +103,6 @@ void addFD(int newFD) {
     fdCount++;
 }
 
-void removeFDInConnectionPhase(int playerNumber) {
-    // Copy the one from the end to the deleted one
-    pollFDs[playerNumber] = pollFDs[fdCount - 1];
-
-    fdCount--;
-}
-
 void removeFDInGamePhase(int playerNumber) {
     // Closes connection with player
     close(pollFDs[playerNumber].fd);
@@ -170,7 +159,7 @@ void sendDisqualification(int playerNumber) {
     }
 }
 
-void sendMoveAnnoucement(Coordinate* move, int specialField) {
+void sendMoveAnnoucement(int x, int y, int specialTile) {
     for (int playerNumber = 1; playerNumber <= fdCount; ++playerNumber) {
         if (pollFDs[playerNumber].fd == -1) {
             continue;
@@ -185,44 +174,50 @@ void sendMoveAnnoucement(Coordinate* move, int specialField) {
         sendMessage(&length, 4, "message size", playerNumber);
 
         // Send x coordinate
-        int16_t x = htons(move->x);
+        int16_t xCoordinate = htons(x);
         sendMessage(&x, 2, "move x coordinate", playerNumber);
 
-        // Send x coordinate
-        int16_t y = htons(move->y);
+        // Send y coordinate
+        int16_t yCoordinate = htons(y);
         sendMessage(&y, 2, "move y coordinate", playerNumber);
 
-        // Send x coordinate
-        int8_t choice = specialField;
-        sendMessage(&choice, 1, "special field", playerNumber);
+        // Send choice for special tile
+        int8_t choice = specialTile;
+        sendMessage(&choice, 1, "special tile choice", playerNumber);
     }
 }
 
-void sendPhaseAnnoucement(int phase) {
+void sendPhaseAnnoucement(int endedPhase) {
     for (int playerNumber = 1; playerNumber <= fdCount; ++playerNumber) {
         if (pollFDs[playerNumber].fd == -1) {
             continue;
         }
 
         // Send message type
-        int8_t messageType = 7 + phase;
+        int8_t messageType = 7 + endedPhase;
         sendMessage(&messageType, 1, "message type", playerNumber);
     }
 }
 
-void receiveMove() {
-    // Check whether move is valid
-    map_isMoveValid();
+void processMove(int x, int y, char player, int specialTile, int phase) {
+    // Check whether move is valid and retrieve capturable stones into headPointer
+    if (!map_getCapturableStones(x, y, player, true, phase)) {
+        printf("Player " BLUE "%i" " made an illegal move. Player " BLUE "%i" " is disqualified!",
+               playerToInt(player), playerToInt(player));
+        sendDisqualification(playerToInt(player));
+        return;
+    }
+
+    // If move was valid -> Send to other players
+    sendMoveAnnoucement(x, y, specialTile);
 
     // Apply move
+    map_executeMove(x, y, player, specialTile, phase);
+    map_emptyCapturableStones();
 
     // Print some stuff for map
 
-    // Send move to other players
-    sendMoveAnnoucement();
 }
-
-
 
 //// Public functions
 /////////////////////
@@ -320,14 +315,16 @@ struct pollfd* server_acceptConnections() {
             fflush(stdout);
         } else {
             // If not the listener, then it's a client. We only allow disconnects, otherwise ignore
-            char message[256];
+            char message[6];
             for (int i = 1; i < fdSize; ++i) {
-                if (pollFDs[i].revents & POLLIN && recv(pollFDs[i].fd, message, sizeof(message), 0) == 0) {
+                if (pollFDs[i].revents & POLLIN && recv(pollFDs[i].fd, message, 6, 0) == 0) {
                     // Connection closed by client
                     printf("Player " BLUE "%i" RESET " closed the connection!\n", i);
                     fflush(stdout);
                     close(pollFDs[i].fd);
-                    removeFDInConnectionPhase(i);
+                    // Copy the one from the end to the deleted one
+                    pollFDs[i] = pollFDs[fdCount - 1];
+                    fdCount--;
                 }
             }
         }
@@ -378,29 +375,95 @@ void server_sendPlayerNumber() {
     }
 }
 
-void server_startGame() {
-    while (true) {
+void server_startPhase(int phase) {
+    bool movePossible;
+
+    while (movePossible) {
         for (int playerNumber = 1; playerNumber <= fdCount; ++playerNumber) {
             if (pollFDs[playerNumber].fd == -1) {
                 continue;
+            }
+
+            movePossible = false;
+
+            // Check whether move is possible
+            for (int i = 0; i < MAP_HEIGHT; ++i) {
+                for (int j = 0; j < MAP_WIDTH; ++j) {
+                    if (map_isMoveValid(j, i, intToPlayer(playerNumber), true, true, phase)) {
+                        movePossible = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!movePossible) {
+                printf("Phase " YELLOW "%i" RESET " ended!", phase);
+                sendPhaseAnnoucement(phase);
+                return;
             }
 
             // Send move request to player
             sendMoveRequest(playerNumber);
 
             // Wait if time limit is not 0
+            // waitingTime is in milliseconds
             int waitingTime = timeLimit == 0 ? -1 : timeLimit;
+            // Add 200 ms to each player for connection lags
+            waitingTime += 200;
             int pollCount = poll(pollFDs, fdCount, waitingTime);
             if (pollCount == -1) {
-                fprintf(stderr, RED "Error while waiting for move of player " BLUE "%i" RESET "!\n");
+                fprintf(stdout, RED "Error while waiting for move of player " BLUE "%i" RESET "!\n", playerNumber);
+                fflush(stdout);
             } else if (pollCount == 0) {
                 // Player timed out while doing a move -> disqualify
-                sendDisqualification(playerNumber)
+                fprintf(stdout, RED "Player " BLUE "%i" " timed out while making a move" RESET "!\n", playerNumber);
+                sendDisqualification(playerNumber);
             }
 
             // Player sent a move
             if (pollFDs[playerNumber].revents & POLLIN) {
+                char receivedMessage[10];
 
+                int numberOfBytes = recv(pollFDs[playerNumber].fd, receivedMessage, sizeof(receivedMessage), 0);
+
+                if (numberOfBytes == 0) {
+                    // Connection closed by client
+                    printf("Player " BLUE "%i" RESET " closed the connection!\n", playerNumber);
+                    fflush(stdout);
+                    sendDisqualification(playerNumber);
+                } else if (numberOfBytes < 0) {
+                    // Error while receiving
+                    printf("Error while receiving from " BLUE "%i" RESET ".\n", playerNumber);
+                    fflush(stdout);
+                    sendDisqualification(playerNumber);
+                } else {
+                    // Handle sent move
+                    // Get type of message
+                    int8_t type = (int) receivedMessage[0];
+                    if (type != 5) {
+                        printf("Player " BLUE "%i" RESET " sent wrong type of message.\n", playerNumber);
+                        printf("Necessary was message type " MAGENTA "5" RESET " , instead received " MAGENTA "%i" RESET ".\n", type);
+                        fflush(stdout);
+                        sendDisqualification(playerNumber);
+                    }
+
+                    // Get length of message  (actually not required -> fixed size for messages of type 5)
+//                    int32_t length;
+//                    length |= ((int32_t) receivedMessage[1]) << 24;
+//                    length |= ((int32_t) receivedMessage[2]) << 16;
+//                    length |= ((int32_t) receivedMessage[3]) << 8;
+//                    length |= (int32_t) receivedMessage[4];
+//                    length = ntohl(length);
+
+                    // Get the message
+                    int16_t x = ((int16_t) receivedMessage[5]) << 8 | (int16_t) receivedMessage[6];
+                    x = ntohs(x);
+                    int16_t y = ((int16_t) receivedMessage[7]) << 8 | (int16_t) receivedMessage[8];
+                    y = ntohs(y);
+                    int8_t specialTile = (int8_t) receivedMessage[9];
+
+                    processMove(x, y, specialTile, intToPlayer(playerNumber), phase);
+                }
             }
         }
     }
