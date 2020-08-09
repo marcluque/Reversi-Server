@@ -82,10 +82,46 @@ static inline int playerToInt(char player) {
     return player - '0';
 }
 
+static inline char intToPlayer(int player) {
+    return (char) ('0' + player);
+}
+
 static inline void printMap(char** map) {
     for (int i = 0; i < MAP_HEIGHT; ++i) {
         for (int j = 0; j < MAP_WIDTH; ++j) {
              printf("%c ", map[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+static inline void printNiceMap(char** map, char playerAtTurn) {
+    for (int i = 0; i < MAP_HEIGHT; ++i) {
+        for (int j = 0; j < MAP_WIDTH; ++j) {
+            // TODO: Print ' to mark as possible move and cyan
+
+            switch (map[i][j]) {
+                case 'c':
+                    printf(YELLOW "c " RESET);
+                    break;
+                case 'i':
+                    printf(MAGENTA "i " RESET);
+                    break;
+                case 'b':
+                    printf(GREEN "b " RESET);
+                    break;
+                case '-':
+                    printf(BLACK "- " RESET);
+                    break;
+                default:
+                    if (map[i][j] == playerAtTurn) {
+                        printf(CYAN "%c " RESET, map[i][j]);
+                    } else {
+                        printf("%c ", map[i][j]);
+                    }
+            }
+
+            printf("%c ", map[i][j]);
         }
         printf("\n");
     }

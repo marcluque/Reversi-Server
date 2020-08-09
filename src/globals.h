@@ -5,23 +5,30 @@
 #ifndef REVERSI_SERVER_GLOBALS_H
 #define REVERSI_SERVER_GLOBALS_H
 
+//// Standard lib
+/////////////////
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <libgen.h>
-
-#include <sys/socket.h>
 #include <sys/queue.h>
 
+//// Networking
+///////////////
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <poll.h>
 
+//// External libraries
+///////////////////////
 #include "uthash.h"
 
+//// Console Colors
+///////////////////
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
 #define RED     "\033[31m"      /* Red */
