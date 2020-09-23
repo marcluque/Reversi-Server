@@ -6,8 +6,9 @@
 #define REVERSI_SERVER_SERVER_H
 
 #include "../globals.h"
+#include "../map/map.h"
 
-void server_initServer(char *hostParam, char *portParam, int timeLimitParam, int depthLimitParam);
+void server_initServer(char* hostParam, char* portParam, int timeLimitParam, int depthLimitParam);
 
 struct pollfd* server_acceptConnections();
 
