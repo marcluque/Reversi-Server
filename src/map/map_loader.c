@@ -41,7 +41,7 @@ char* map_loader_processMap(char* baseDir, const char* mapName) {
     overrides[counter] = '\0';
     NUM_OVERRIDE = (int) strtol(overrides, NULL, 10);
     numberOfOverride = malloc(sizeof(int) * (NUM_PLAYERS + 1));
-    for (int i = 0; i < NUM_PLAYERS; ++i) {
+    for (int i = 1; i <= NUM_PLAYERS; ++i) {
         numberOfOverride[i] = NUM_OVERRIDE;
     }
 
@@ -56,7 +56,7 @@ char* map_loader_processMap(char* baseDir, const char* mapName) {
     bombs[counter] = '\0';
     NUM_BOMBS = (int) strtol(bombs, NULL, 10);
     numberOfBombs = malloc(sizeof(int) * (NUM_PLAYERS + 1));
-    for (int i = 0; i < NUM_PLAYERS; ++i) {
+    for (int i = 1; i <= NUM_PLAYERS; ++i) {
         numberOfBombs[i] = NUM_BOMBS;
     }
 
@@ -105,7 +105,9 @@ char* map_loader_processMap(char* baseDir, const char* mapName) {
             if (buffer[j] == '\n') {
                 break;
             } else if (buffer[j] != ' ') {
-                numberOfStones[playerToInt(buffer[j])] += isTilePlayer(buffer[j]);
+                if (isTilePlayer(buffer[j])) {
+                    numberOfStones[playerToInt(buffer[j])] += isTilePlayer(buffer[j]);
+                }
                 map[i][colCount] = buffer[j];
                 colCount++;
             }
@@ -118,25 +120,26 @@ char* map_loader_processMap(char* baseDir, const char* mapName) {
         char* splitToDelimiter = strtok(buffer, delimiter);
 
         // Get start of transition
-        Transition key;
-        key.x = (int) strtol(splitToDelimiter, NULL, 10);
+        Transition transition1;
+        transition1.x = (int) strtol(splitToDelimiter, NULL, 10);
         splitToDelimiter = strtok(NULL, delimiter);
-        key.y = (int) strtol(splitToDelimiter, NULL, 10);
+        transition1.y = (int) strtol(splitToDelimiter, NULL, 10);
         splitToDelimiter = strtok(NULL, delimiter);
-        key.direction = (int) strtol(splitToDelimiter, NULL, 10);
+        transition1.direction = (int) strtol(splitToDelimiter, NULL, 10);
         splitToDelimiter = strtok(NULL, delimiter);
         // Ignore <->
         splitToDelimiter = strtok(NULL, delimiter);
 
         // Get end of transition
-        Transition value;
-        value.x = (int) strtol(splitToDelimiter, NULL, 10);
+        Transition transition2;
+        transition2.x = (int) strtol(splitToDelimiter, NULL, 10);
         splitToDelimiter = strtok(NULL, delimiter);
-        value.y = (int) strtol(splitToDelimiter, NULL, 10);
+        transition2.y = (int) strtol(splitToDelimiter, NULL, 10);
         splitToDelimiter = strtok(NULL, delimiter);
-        value.direction = (int) strtol(splitToDelimiter, NULL, 10);
+        transition2.direction = (int) strtol(splitToDelimiter, NULL, 10);
 
-        tableAddTransitionPair(&key, &value);
+        transitiontable_add(&transition1, &transition2);
+        transitiontable_add(&transition2, &transition1);
     }
 
     // Store whole file in a string

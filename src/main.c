@@ -46,6 +46,10 @@ int main(int argc, char* argv[]) {
     // Load map
     char* mapString = map_loader_processMap(argv[0], mapName);
     printf("Successfully parsed map!\n");
+
+    printf("\nMAP:\n");
+    printMap(map);
+    printf("\n");
     fflush(stdout);
 
     // On start-up the server waits for the required number of players to join the server
@@ -59,6 +63,7 @@ int main(int argc, char* argv[]) {
 
     server_startPhase(1);
 
+    transitiontable_clean();
     map_cleanUp();
     server_cleanUp();
 

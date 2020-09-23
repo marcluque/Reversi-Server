@@ -10,6 +10,22 @@
 
 #include "../globals.h"
 
+//// Singly Linked List
+///////////////////////
+// Define struct for head of list
+SLIST_HEAD(ListHead, Item);
+struct ListHead* capturableStonesHeadPointer;
+struct Item {
+    int x;
+    int y;
+    SLIST_ENTRY(Item) nextItem;
+};
+
+typedef struct Item Item;
+typedef struct ListHead ListHead;
+
+//// Transition hash table
+//////////////////////////
 typedef struct {
     int x;
     int y;
@@ -22,6 +38,16 @@ typedef struct {
     UT_hash_handle hh;
 } TransitionPair;
 
+extern TransitionPair* transitionPairs;
+
+Transition* transitiontable_get(Transition* transition);
+
+void transitiontable_add(Transition* transitionKey, Transition* value);
+
+void transitiontable_clean();
+
+//// Game map variables
+///////////////////////
 int NUM_PLAYERS;
 int NUM_OVERRIDE;
 int NUM_BOMBS;
@@ -29,21 +55,8 @@ int BOMB_RADIUS;
 int MAP_HEIGHT;
 int MAP_WIDTH;
 
-static TransitionPair* transitionPairs = NULL;
-
-static inline Transition* tableGetTransition(Transition* transition) {
-    TransitionPair* result;
-    HASH_FIND_INT(transitionPairs, transition, result);
-    return result == NULL ? NULL : &(result->value);
-}
-
-static inline void tableAddTransitionPair(Transition* transitionKey, Transition* value) {
-    TransitionPair* transitionPair = malloc(sizeof(TransitionPair));
-    transitionPair->key = *transitionKey;
-    transitionPair->value = *value;
-    HASH_ADD_INT(transitionPairs, key, transitionPair);
-}
-
+//// Game map util functions
+////////////////////////////
 static inline bool isTileHole(char tile) {
     return tile == '-';
 }
@@ -56,12 +69,7 @@ static inline bool isTileExpansion(char tile) {
     return tile == 'x';
 }
 
-/*
- * Considers tiles with expansion stones as occupied according to the specification.
- *
- * @param tile
- * @return whether tile is expansion stone OR character from 1 to 8, using ascii values.
- */
+// Considers tiles with expansion stones as occupied according to the specification.
 static inline bool isTileOccupied(char tile) {
     return isTileExpansion(tile) | isTilePlayer(tile);
 }
@@ -86,10 +94,40 @@ static inline char intToPlayer(int player) {
     return (char) ('0' + player);
 }
 
+//// Game map printing functions
+////////////////////////////////
 static inline void printMap(char** map) {
     for (int i = 0; i < MAP_HEIGHT; ++i) {
         for (int j = 0; j < MAP_WIDTH; ++j) {
              printf("%c ", map[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+static inline void printWithCapturedStonesMap(char** map, int startX, int startY) {
+    bool captured = false;
+    for (int i = 0; i < MAP_HEIGHT; ++i) {
+        for (int j = 0; j < MAP_WIDTH; ++j) {
+            if (j == startX && i == startY) {
+                printf(BOLDBLUE "%c" RESET " ", map[i][j]);
+                continue;
+            }
+
+            Item* item;
+            SLIST_FOREACH(item, capturableStonesHeadPointer, nextItem) {
+                if (item->x == j && item->y == i) {
+                    captured = true;
+                    break;
+                }
+            }
+
+            if (captured) {
+                printf(BOLDYELLOW "%c" RESET " ", map[i][j]);
+                captured = false;
+            } else {
+                printf("%c ", map[i][j]);
+            }
         }
         printf("\n");
     }
