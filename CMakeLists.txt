@@ -13,6 +13,9 @@ add_executable(reversi_server
         src/map/map.h
         src/map/map_util.h
         src/globals.h
-        libs/uthash/include/uthash.h src/map/map_loader.c src/map/map_loader.h)
+        libs/uthash/include/uthash.h
+        src/map/map_loader.c
+        src/map/map_loader.h
+        src/map/map_util.c)
 
 target_link_libraries(reversi_server -static-libgcc -static-libstdc++)

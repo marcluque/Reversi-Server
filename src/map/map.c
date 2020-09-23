@@ -6,6 +6,17 @@
 
 //// Variables
 //////////////
+struct ListHead capturableStonesHead = SLIST_HEAD_INITIALIZER(capturableStonesHead);
+struct ListHead* capturableStonesHeadPointer = &capturableStonesHead;
+
+struct ListHead pathHead = SLIST_HEAD_INITIALIZER(pathHead);
+struct ListHead* pathHeadPointer = &pathHead;
+
+char** map = NULL;
+int* numberOfStones = NULL;
+int* numberOfOverride = NULL;
+int* numberOfBombs = NULL;
+
 const int CORNERS[8][2] = {{0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}};
 
 //// Private funtions
@@ -17,14 +28,7 @@ bool walkPath(int startX, int startY, int direction, char player, bool useList) 
     int pathLength = -1;
 
     do {
-        if (useList) {
-            Item* coordinate = malloc(sizeof(Item));
-            coordinate->x = x;
-            coordinate->y = y;
-            SLIST_INSERT_HEAD(headPointer, coordinate, nextItem);
-        }
-
-        Transition* transitionEnd = tableGetTransition(&((Transition) {x, y, direction}));
+        Transition* transitionEnd = transitiontable_get(&((Transition) {x, y, direction}));
 
         // Follow the transition, if there is one and adapt its direction
         if (transitionEnd != NULL) {
@@ -36,6 +40,13 @@ bool walkPath(int startX, int startY, int direction, char player, bool useList) 
             // Move in the specified direction, while the next stone still is another player's stone
             x += CORNERS[direction][0];
             y += CORNERS[direction][1];
+        }
+
+        if (useList) {
+            Item* coordinate = malloc(sizeof(Item));
+            coordinate->x = x;
+            coordinate->y = y;
+            SLIST_INSERT_HEAD(pathHeadPointer, coordinate, nextItem);
         }
 
         pathLength++;
@@ -56,7 +67,7 @@ void executeBuildMove(int x, int y, char player, int specialTile) {
     }
 
     Item* item;
-    SLIST_FOREACH(item, headPointer, nextItem) {
+    SLIST_FOREACH(item, capturableStonesHeadPointer, nextItem) {
         // If a special tile is encountered, ignore, as it's dealt with separately
         if (isTileSpecial(map[item->y][item->x])) {
             numberOfStones[playerId]++;
@@ -96,7 +107,7 @@ void executeBuildMove(int x, int y, char player, int specialTile) {
             map[y][x] = player;
 
             // Switches the stones of the players
-            for (int i = 1; i <= 8; i++) {
+            for (int i = 1; i <= NUM_PLAYERS; i++) {
                 int nextPlayer = (i % NUM_PLAYERS) + 1;
                 int tempNumber = numberOfStones[i];
                 numberOfStones[i] = numberOfStones[nextPlayer];
@@ -128,6 +139,14 @@ void executeBombMove(int x, int y, char player) {
 
 }
 
+void emptyPath() {
+    while (!SLIST_EMPTY(pathHeadPointer)) {
+        Item* item = SLIST_FIRST(pathHeadPointer);
+        SLIST_REMOVE_HEAD(pathHeadPointer, nextItem);
+        free(item);
+    }
+}
+
 //// Public functions
 /////////////////////
 bool map_getCapturableStones(int x, int y, char player, bool override, int phase) {
@@ -147,19 +166,39 @@ bool map_isMoveValid(int x, int y, char player, bool returnEarly, bool override,
         }
 
         // Used for allowing an override action without actually enclosing a path on an expansion stone!
-        bool result = isTileExpansion(map[y][x]);
+        bool finalResult = isTileExpansion(map[y][x]);
+        bool tempResult;
+
+        if (useList) {
+            // Add start stone to capturable stones
+            Item* startCoordinate = malloc(sizeof(Item));
+            startCoordinate->x = x;
+            startCoordinate->y = y;
+            SLIST_INSERT_HEAD(capturableStonesHeadPointer, startCoordinate, nextItem);
+        }
 
         // Iterate over all directions from start tile
         for (int direction = 0; direction < 8; direction++) {
             // Walk along direction starting from (x,y)
-            result |= walkPath(x, y, direction, player, useList);
+            tempResult = walkPath(x, y, direction, player, useList);
+            finalResult |= tempResult;
 
-            if (returnEarly & result) {
+            if (returnEarly & finalResult) {
                 return true;
+            }
+
+            if (useList) {
+                while (!SLIST_EMPTY(pathHeadPointer)) {
+                    Item* item = SLIST_FIRST(pathHeadPointer);
+                    SLIST_REMOVE_HEAD(pathHeadPointer, nextItem);
+                    if (tempResult) {
+                        SLIST_INSERT_HEAD(capturableStonesHeadPointer, item, nextItem);
+                    }
+                }
             }
         }
 
-        return result;
+        return finalResult;
     } else {
         // Elimination phase
         // Check basic invalidity for elimination phase
@@ -176,9 +215,9 @@ void map_executeMove(int x, int y, char player, int specialTile, int phase) {
 }
 
 void map_emptyCapturableStones() {
-    while (!SLIST_EMPTY(headPointer)) {
-        Item* item = SLIST_FIRST(headPointer);
-        SLIST_REMOVE_HEAD(headPointer, nextItem);
+    while (!SLIST_EMPTY(capturableStonesHeadPointer)) {
+        Item* item = SLIST_FIRST(capturableStonesHeadPointer);
+        SLIST_REMOVE_HEAD(capturableStonesHeadPointer, nextItem);
         free(item);
     }
 }
