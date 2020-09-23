@@ -5,10 +5,13 @@ The rules for this more complex version of Reversi are explained below.
 The clients communicate with the server according to the protocol below.
 
 ## Rules
-
-### Protocol
+The tweaked version of Reversi comprises several rules that make the game more difficult.
+These rules are defined in the following.
+Afterwards, the protocol for the communication of client and server is explained.
 
 ### Game
+
+### Protocol
 
 ## Client
 The server is written to work with the following [AI](https://github.com/DataSecs/Reversi-AI).
