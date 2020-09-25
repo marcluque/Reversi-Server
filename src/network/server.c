@@ -4,7 +4,6 @@
 // Created with <3 by DataSecs on 03.08.20.
 //
 
-#include <errno.h>
 #include "server.h"
 
 //// Variables
@@ -203,6 +202,10 @@ void sendPhaseAnnoucement(int endedPhase) {
         // Send message type
         int8_t messageType = 7 + endedPhase;
         sendMessage(&messageType, 1, "message type", playerNumber);
+
+        // Send length
+        int32_t length = 0;
+        sendMessage(&length, 4, "message size", playerNumber);
     }
 }
 
@@ -213,7 +216,7 @@ void processMove(int x, int y, char player, int specialTile, int phase) {
     bool hasCapturableStones = map_getCapturableStones(x, y, player, true, phase);
     t = clock() - t;
     double time = ((double) t);
-    printf("Took " BOLDCYAN "%.1f" RESET " µs to collect capturable stones.\n", time);
+    printf("Took " BOLDCYAN "%.1f" RESET " µs to collect affected stones.\n", time);
     fflush(stdout);
 
     if (!hasCapturableStones) {
@@ -248,7 +251,7 @@ void receiveMove(int playerNumber, int phase) {
         sendDisqualification(playerNumber);
     } else if (numberOfBytes < 0) {
         // Error while receiving
-        printf("Error while receiving from " BLUE "%i" RESET ".\n", playerNumber);
+        printf("Error while receiving move from player " BLUE "%i" RESET ".\n", playerNumber);
         printf("Error code: %i" , errno);
         fflush(stdout);
         sendDisqualification(playerNumber);
@@ -443,12 +446,13 @@ void server_sendPlayerNumber() {
     }
 }
 
-void server_startPhase(int phase) {
+int server_startPhase(int phase, int startingPlayer) {
     int playerWithMoves;
+    int playerLastMove;
 
     while (true) {
         playerWithMoves = 0;
-        for (int playerNumber = 1; playerNumber <= NUM_PLAYERS; ++playerNumber) {
+        for (int playerNumber = startingPlayer; playerNumber <= NUM_PLAYERS; ++playerNumber) {
             if (pollFDs[playerNumber].fd == -1) {
                 continue;
             }
@@ -475,6 +479,7 @@ void server_startPhase(int phase) {
 
             // Send move request to player
             sendMoveRequest(playerNumber);
+            playerLastMove = playerNumber;
 
             // Wait if time limit is not 0
             // waitingTime is in milliseconds
@@ -505,7 +510,7 @@ void server_startPhase(int phase) {
             printf("Phase " YELLOW "%i" RESET " ended!\n", phase);
             fflush(stdout);
             sendPhaseAnnoucement(phase);
-            return;
+            return playerLastMove;
         }
     }
 }

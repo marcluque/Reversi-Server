@@ -135,14 +135,14 @@ void executeBuildMove(int x, int y, char player, int specialTile) {
     }
 }
 
-void executeBombMoveRecursive(Map map, int x, int y, int depth) {
+void executeBombMoveRecursive(int x, int y, int depth) {
     int startX = x;
     int startY = y;
 
-    if (!isCoordinateInMap(x, y) || isTileHole(map.getGameField()[y][x])) {
+    if (!isCoordinateInMap(x, y) || isTileHole(map[y][x])) {
         return;
     } else if (depth == BOMB_RADIUS) {
-        map.getGameField()[y][x] = '$';
+        map[y][x] = '$';
         return;
     }
 
@@ -160,16 +160,17 @@ void executeBombMoveRecursive(Map map, int x, int y, int depth) {
         }
 
         if (isCoordinateInMap(x, y)) {
-            executeBombMoveRecursive(map, x, y, depth + 1);
+            executeBombMoveRecursive(x, y, depth + 1);
         }
     }
 
     x = startX;
     y = startY;
-    map.getGameField()[y][x] = '$';
+    map[y][x] = '$';
 }
 
-void executeBombMove(int x, int y) {
+void executeBombMove(int x, int y, char player) {
+    numberOfBombs[playerToInt(player)]--;
     executeBombMoveRecursive(x, y, 0);
 
     for (int i = 0; i < MAP_HEIGHT; i++) {
@@ -244,7 +245,7 @@ void map_executeMove(int x, int y, char player, int specialTile, int phase) {
     if (phase == 1) {
         executeBuildMove(x, y, player, specialTile);
     } else {
-        executeBombMove(x, y);
+        executeBombMove(x, y, player);
     }
 }
 

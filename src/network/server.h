@@ -16,7 +16,7 @@ void server_sendMapData(char* mapString);
 
 void server_sendPlayerNumber();
 
-void server_startPhase(int phase);
+int server_startPhase(int phase, int startingPlayer);
 
 void server_cleanUp();
 
