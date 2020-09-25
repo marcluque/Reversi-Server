@@ -208,7 +208,15 @@ void sendPhaseAnnoucement(int endedPhase) {
 
 void processMove(int x, int y, char player, int specialTile, int phase) {
     // Check whether move is valid and retrieve capturable stones into headPointer
-    if (!map_getCapturableStones(x, y, player, true, phase)) {
+    clock_t t;
+    t = clock();
+    bool hasCapturableStones = map_getCapturableStones(x, y, player, true, phase);
+    t = clock() - t;
+    double time = ((double) t);
+    printf("Took " BOLDCYAN "%.1f" RESET " µs to collect capturable stones.\n", time);
+    fflush(stdout);
+
+    if (!hasCapturableStones) {
         printf("Player " BLUE "%i" RESET " made an illegal move. Player " BLUE "%i" RESET " is disqualified!\n",
                playerToInt(player), playerToInt(player));
         sendDisqualification(playerToInt(player));
@@ -260,7 +268,16 @@ void receiveMove(int playerNumber, int phase) {
         int16_t y = ((int16_t) receivedMessage[7]) << 8 | (int16_t) receivedMessage[8];
         int8_t specialTile = (int8_t) receivedMessage[9];
 
-        printf("Player " BLUE "%i" RESET " picked move (%i, %i) with special tile %i!\n", playerNumber, x, y, specialTile);
+        printf("Player " BLUE "%i" RESET " picked move (%i, %i)", playerNumber, x, y);
+        if (specialTile == 0) {
+            printf("!\n");
+        } else if (specialTile == 20) {
+            printf(" and received an extra bomb!\n");
+        } else if (specialTile == 21) {
+            printf(" and received an extra override stone!\n");
+        } else {
+            printf(" and switched stones with player " BLUE "%i" RESET "!\n", specialTile);
+        }
         fflush(stdout);
         processMove(x, y, intToPlayer(playerNumber), specialTile, phase);
     }

@@ -135,16 +135,43 @@ void executeBuildMove(int x, int y, char player, int specialTile) {
     }
 }
 
-void executeBombMove(int x, int y, char player) {
+void executeBombMoveRecursive(int x, int y, int depth, int visited[MAP_HEIGHT][MAP_WIDTH]) {
+    if (isTileHole(map[y][x]) || depth == BOMB_RADIUS) {
+        return;
+    }
 
+    depth++;
+
+    for (int i = 0; i < 8; ++i) {
+        if (visited[y][x]) {
+            continue;
+        }
+
+        Transition* transitionEnd = transitiontable_get(&((Transition) {x, y, i}));
+        visited[y][x] = 1;
+        map[y][x] = '-';
+
+        if (transitionEnd != NULL) {
+            x = transitionEnd->x;
+            y = transitionEnd->y;
+        } else {
+            x += CORNERS[i][0];
+            y += CORNERS[i][1];
+        }
+
+        executeBombMoveRecursive(x, y, depth, visited);
+    }
 }
 
-void emptyPath() {
-    while (!SLIST_EMPTY(pathHeadPointer)) {
-        Item* item = SLIST_FIRST(pathHeadPointer);
-        SLIST_REMOVE_HEAD(pathHeadPointer, nextItem);
-        free(item);
+void executeBombMove(int x, int y) {
+    int visited[MAP_HEIGHT][MAP_WIDTH];
+    for (int i = 0; i < MAP_HEIGHT; i++) {
+        for (int j = 0; j < MAP_WIDTH; j++) {
+            visited[i][j] = 0;
+        }
     }
+
+    executeBombMoveRecursive(x, y, 0, visited);
 }
 
 //// Public functions
@@ -210,7 +237,7 @@ void map_executeMove(int x, int y, char player, int specialTile, int phase) {
     if (phase == 1) {
         executeBuildMove(x, y, player, specialTile);
     } else {
-        executeBombMove(x, y, player);
+        executeBombMove(x, y);
     }
 }
 

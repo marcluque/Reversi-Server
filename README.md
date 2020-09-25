@@ -1,5 +1,5 @@
 # Reversi-Server
-The Reversi-Server may be used as game master for [clients](https://github.com/DataSecs/Reversi-AI) to play Reversi.
+The Reversi-Server may be used as a game master for [clients](https://github.com/DataSecs/Reversi-AI) to play Reversi.
 However, this version of Reversi is tweaked to be harder and more complicated.
 The rules for this more complex version of Reversi are explained below.
 The clients communicate with the server according to the protocol below.
@@ -7,9 +7,11 @@ The clients communicate with the server according to the protocol below.
 ## Rules
 The tweaked version of Reversi comprises several rules that make the game more difficult.
 These rules are defined in the following.
-Afterwards, the protocol for the communication of client and server is explained.
+Afterward, the protocol for the communication of the client and server is explained.
 
 ### Game
+
+
 
 ### Protocol
 
