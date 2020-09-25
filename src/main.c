@@ -61,9 +61,12 @@ int main(int argc, char* argv[]) {
     server_sendMapData(mapString);
     server_sendPlayerNumber();
 
-    server_startPhase(1);
+    int lastPlayer = server_startPhase(1, 1);
+    server_startPhase(2, (lastPlayer % NUM_PLAYERS) + 1);
 
-    transitiontable_clean();
+    //server_closeConnections();
+
+    transitiontable_cleanUp();
     map_cleanUp();
     server_cleanUp();
 

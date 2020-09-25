@@ -19,7 +19,7 @@ void transitiontable_add(Transition* transitionKey, Transition* value) {
     HASH_ADD(hh, transitionPairs, key, sizeof(Transition), transitionPair);
 }
 
-void transitiontable_clean() {
+void transitiontable_cleanUp() {
     TransitionPair* result;
     TransitionPair* tmp;
     HASH_ITER(hh, transitionPairs, result, tmp) {

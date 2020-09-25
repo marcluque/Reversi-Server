@@ -15,6 +15,7 @@
 #include <libgen.h>
 #include <sys/queue.h>
 #include <time.h>
+#include <errno.h>
 
 //// Networking
 ///////////////

@@ -44,7 +44,7 @@ Transition* transitiontable_get(Transition* transition);
 
 void transitiontable_add(Transition* transitionKey, Transition* value);
 
-void transitiontable_clean();
+void transitiontable_cleanUp();
 
 //// Game map variables
 ///////////////////////
