@@ -135,21 +135,21 @@ void executeBuildMove(int x, int y, char player, int specialTile) {
     }
 }
 
-void executeBombMoveRecursive(int x, int y, int depth, int visited[MAP_HEIGHT][MAP_WIDTH]) {
-    if (isTileHole(map[y][x]) || depth == BOMB_RADIUS) {
+void executeBombMoveRecursive(Map map, int x, int y, int depth) {
+    int startX = x;
+    int startY = y;
+
+    if (!isCoordinateInMap(x, y) || isTileHole(map.getGameField()[y][x])) {
+        return;
+    } else if (depth == BOMB_RADIUS) {
+        map.getGameField()[y][x] = '$';
         return;
     }
 
-    depth++;
-
     for (int i = 0; i < 8; ++i) {
-        if (visited[y][x]) {
-            continue;
-        }
-
+        x = startX;
+        y = startY;
         Transition* transitionEnd = transitiontable_get(&((Transition) {x, y, i}));
-        visited[y][x] = 1;
-        map[y][x] = '-';
 
         if (transitionEnd != NULL) {
             x = transitionEnd->x;
@@ -159,19 +159,26 @@ void executeBombMoveRecursive(int x, int y, int depth, int visited[MAP_HEIGHT][M
             y += CORNERS[i][1];
         }
 
-        executeBombMoveRecursive(x, y, depth, visited);
-    }
-}
-
-void executeBombMove(int x, int y) {
-    int visited[MAP_HEIGHT][MAP_WIDTH];
-    for (int i = 0; i < MAP_HEIGHT; i++) {
-        for (int j = 0; j < MAP_WIDTH; j++) {
-            visited[i][j] = 0;
+        if (isCoordinateInMap(x, y)) {
+            executeBombMoveRecursive(map, x, y, depth + 1);
         }
     }
 
-    executeBombMoveRecursive(x, y, 0, visited);
+    x = startX;
+    y = startY;
+    map.getGameField()[y][x] = '$';
+}
+
+void executeBombMove(int x, int y) {
+    executeBombMoveRecursive(x, y, 0);
+
+    for (int i = 0; i < MAP_HEIGHT; i++) {
+        for (int j = 0; j < MAP_WIDTH; j++) {
+            if (map[i][j] == '$') {
+                map[i][j] = '-';
+            }
+        }
+    }
 }
 
 //// Public functions
