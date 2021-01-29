@@ -52,10 +52,8 @@ int main(int argc, char* argv[]) {
     printf("\n");
     fflush(stdout);
 
-    // On start-up the server waits for the required number of players to join the server
-    //server_startServer(host, port);
-
     server_initServer(host, port, timeLimit, depthLimit);
+    // On start-up the server waits for the required number of players to join the server
     server_acceptConnections();
 
     server_sendMapData(mapString);
@@ -69,8 +67,6 @@ int main(int argc, char* argv[]) {
     transitiontable_cleanUp();
     map_cleanUp();
     server_cleanUp();
-
-    while (1);
 
     return 0;
 }
