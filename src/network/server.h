@@ -1,5 +1,5 @@
 //
-// Created with <3 by DataSecs on 03.08.20.
+// Created with <3 by marcluque, August 2020
 //
 
 #ifndef REVERSI_SERVER_SERVER_H

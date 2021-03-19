@@ -1,5 +1,5 @@
 //
-// Created with <3 by DataSecs on 22.09.20.
+// Created with <3 by marcluque, September 2020
 //
 
 #include "map_util.h"

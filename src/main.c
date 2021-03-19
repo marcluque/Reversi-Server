@@ -1,10 +1,13 @@
+//
+// Created with <3 by marcluque, August 2020
+//
+
 #include <zconf.h>
 #include "globals.h"
 #include "network/server.h"
 #include "map/map.h"
 #include "map/map_loader.h"
 
-// Main
 int main(int argc, char* argv[]) {
     char* mapName = NULL;
     char* host = "127.0.0.1";

@@ -2,7 +2,7 @@
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 #pragma ide diagnostic ignored "hicpp-multiway-paths-covered"
 //
-// Created with <3 by DataSecs on 04.08.20.
+// Created with <3 by marcluque, August 2020
 //
 
 #ifndef REVERSI_SERVER_MAP_UTIL_H

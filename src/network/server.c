@@ -1,7 +1,7 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 //
-// Created with <3 by DataSecs on 03.08.20.
+// Created with <3 by marcluque, August 2020
 //
 
 #include "server.h"
