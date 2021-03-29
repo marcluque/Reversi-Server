@@ -17,11 +17,11 @@ int* numberOfStones = NULL;
 int* numberOfOverride = NULL;
 int* numberOfBombs = NULL;
 
-const int CORNERS[8][2] = {{0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}};
+static const int CORNERS[8][2] = {{0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}};
 
-//// Private funtions
-/////////////////////
-bool walkPath(int startX, int startY, int direction, char player, bool useList) {
+//// Private functions
+//////////////////////
+static bool walkPath(int startX, int startY, int direction, char player, bool useList) {
     int x = startX;
     int y = startY;
     // Starts at -1 because the do while immediately adds the start tile, but the start tile doesn't count for a path
@@ -59,7 +59,7 @@ bool walkPath(int startX, int startY, int direction, char player, bool useList) 
            && (startX != x || startY != y);
 }
 
-void executeBuildMove(int x, int y, char player, int specialTile) {
+static void executeBuildMove(int x, int y, char player, int specialTile) {
     int playerId = playerToInt(player);
 
     if (isTileOccupied(map[y][x])) {
@@ -135,7 +135,7 @@ void executeBuildMove(int x, int y, char player, int specialTile) {
     }
 }
 
-void executeBombMoveRecursive(int x, int y, int depth) {
+static void executeBombMoveRecursive(int x, int y, int depth) {
     int startX = x;
     int startY = y;
 
@@ -169,7 +169,7 @@ void executeBombMoveRecursive(int x, int y, int depth) {
     map[y][x] = '$';
 }
 
-void executeBombMove(int x, int y, char player) {
+static void executeBombMove(int x, int y, char player) {
     numberOfBombs[playerToInt(player)]--;
     executeBombMoveRecursive(x, y, 0);
 

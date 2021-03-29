@@ -4,7 +4,7 @@
 
 #include "map_loader.h"
 
-const int MAX_LINE_LENGTH = 512;
+static const int MAX_LINE_LENGTH = 512;
 
 char* map_loader_processMap(char* baseDir, const char* mapName) {
     char* infix = "/";

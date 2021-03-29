@@ -6,20 +6,20 @@
 
 #include "server.h"
 
-//// Variables
-//////////////
-int fdCount;
-struct pollfd* pollFDs = NULL;
-char* host;
-char* port;
-int connectionLimit;
-int timeLimit;
-int depthLimit;
+//// Private variables
+//////////////////////
+static int fdCount;
+static struct pollfd* pollFDs = NULL;
+static char* host;
+static char* port;
+static int connectionLimit;
+static int timeLimit;
+static int depthLimit;
 
-//// Private funtions
-/////////////////////
-void* getSocketAddress(struct sockaddr* socketAddress) {
-    // Get socket adress in either IPv4 or IPv6
+//// Private functions
+//////////////////////
+static void* getSocketAddress(struct sockaddr* socketAddress) {
+    // Get socket address in either IPv4 or IPv6
     if (socketAddress->sa_family == AF_INET) {
         return &(((struct sockaddr_in*) socketAddress)->sin_addr);
     } else {
@@ -27,7 +27,7 @@ void* getSocketAddress(struct sockaddr* socketAddress) {
     }
 }
 
-int getListenerSocket(int backlog) {
+static int getListenerSocket(int backlog) {
     // Listening socket descriptor
     int listener;
     // For setsockopt() SO_REUSEADDR
@@ -96,19 +96,19 @@ int getListenerSocket(int backlog) {
     return listener;
 }
 
-void addFD(int newFD) {
+static void addFD(int newFD) {
     pollFDs[fdCount].fd = newFD;
     pollFDs[fdCount].events = POLLIN;
     fdCount++;
 }
 
-void removeFDInGamePhase(int playerNumber) {
+static void removeFDInGamePhase(int playerNumber) {
     // Closes connection with player
     close(pollFDs[playerNumber].fd);
     pollFDs[playerNumber].fd = -1;
 }
 
-void sendMessage(void* message, size_t msgLength, char* errorType, int playerNumber) {
+static void sendMessage(void* message, size_t msgLength, char* errorType, int playerNumber) {
     if (send(pollFDs[playerNumber].fd, message, msgLength, 0) == -1) {
         printf(RED "Error while sending " BOLDRED "%s" RESET RED " to player " BLUE "%i!\n" RESET, errorType, playerNumber);
         printf(RED "Removing player " BLUE "%i" RED " from match!\n" RESET, playerNumber);
@@ -118,7 +118,7 @@ void sendMessage(void* message, size_t msgLength, char* errorType, int playerNum
     }
 }
 
-void sendMoveRequest(int playerNumber) {
+static void sendMoveRequest(int playerNumber) {
     printf("Sending a move request to player " BLUE "%i" RESET "...\n", playerNumber);
     fflush(stdout);
 
@@ -139,7 +139,7 @@ void sendMoveRequest(int playerNumber) {
     sendMessage(&messageDepthLimit, 1, "depth limit", playerNumber);
 }
 
-void sendDisqualification(int disqualifiedPlayer) {
+static void sendDisqualification(int disqualifiedPlayer) {
     for (int playerNumber = 1; playerNumber <= NUM_PLAYERS; ++playerNumber) {
         if (pollFDs[playerNumber].fd == -1) {
             continue;
@@ -161,7 +161,7 @@ void sendDisqualification(int disqualifiedPlayer) {
     removeFDInGamePhase(disqualifiedPlayer);
 }
 
-void sendMoveAnnoucement(int x, int y, int specialTile, int playerWithMove) {
+static void sendMoveAnnouncement(int x, int y, int specialTile, int playerWithMove) {
     for (int playerNumber = 1; playerNumber <= NUM_PLAYERS; ++playerNumber) {
         if (pollFDs[playerNumber].fd == -1) {
             continue;
@@ -193,7 +193,7 @@ void sendMoveAnnoucement(int x, int y, int specialTile, int playerWithMove) {
     }
 }
 
-void sendPhaseAnnoucement(int endedPhase) {
+static void sendPhaseAnnouncement(int endedPhase) {
     for (int playerNumber = 1; playerNumber <= NUM_PLAYERS; ++playerNumber) {
         if (pollFDs[playerNumber].fd == -1) {
             continue;
@@ -209,7 +209,7 @@ void sendPhaseAnnoucement(int endedPhase) {
     }
 }
 
-void processMove(int x, int y, char player, int specialTile, int phase) {
+static void processMove(int x, int y, char player, int specialTile, int phase) {
     // Check whether move is valid and retrieve capturable stones into headPointer
     clock_t t;
     t = clock();
@@ -227,7 +227,7 @@ void processMove(int x, int y, char player, int specialTile, int phase) {
     }
 
     // If move was valid -> Send to other players
-    sendMoveAnnoucement(x, y, specialTile, playerToInt(player));
+    sendMoveAnnouncement(x, y, specialTile, playerToInt(player));
 
     // Apply move
     map_executeMove(x, y, player, specialTile, phase);
@@ -239,7 +239,7 @@ void processMove(int x, int y, char player, int specialTile, int phase) {
     map_emptyCapturableStones();
 }
 
-void receiveMove(int playerNumber, int phase) {
+static void receiveMove(int playerNumber, int phase) {
     char receivedMessage[10];
 
     int numberOfBytes = recv(pollFDs[playerNumber].fd, receivedMessage, sizeof(receivedMessage), 0);
@@ -272,14 +272,19 @@ void receiveMove(int playerNumber, int phase) {
         int8_t specialTile = (int8_t) receivedMessage[9];
 
         printf("Player " BLUE "%i" RESET " picked move (%i, %i)", playerNumber, x, y);
-        if (specialTile == 0) {
-            printf("!\n");
-        } else if (specialTile == 20) {
-            printf(" and received an extra bomb!\n");
-        } else if (specialTile == 21) {
-            printf(" and received an extra override stone!\n");
-        } else {
-            printf(" and switched stones with player " BLUE "%i" RESET "!\n", specialTile);
+        switch (specialTile) {
+            case 0:
+                printf("!\n");
+                break;
+            case 20:
+                printf(" and received an extra bomb!\n");
+                break;
+            case 21:
+                printf(" and received an extra override stone!\n");
+                break;
+            default:
+                printf(" and switched stones with player " BLUE "%i" RESET "!\n", specialTile);
+                break;
         }
         fflush(stdout);
         processMove(x, y, intToPlayer(playerNumber), specialTile, phase);
@@ -509,7 +514,7 @@ int server_startPhase(int phase, int startingPlayer) {
         if (playerWithMoves == 0) {
             printf("Phase " YELLOW "%i" RESET " ended!\n", phase);
             fflush(stdout);
-            sendPhaseAnnoucement(phase);
+            sendPhaseAnnouncement(phase);
             return playerLastMove;
         }
     }
