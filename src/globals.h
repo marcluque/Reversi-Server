@@ -2,8 +2,7 @@
 // Created with <3 by marcluque, August 2020
 //
 
-#ifndef REVERSI_SERVER_GLOBALS_H
-#define REVERSI_SERVER_GLOBALS_H
+#pragma once
 
 //// Standard lib
 /////////////////
@@ -48,5 +47,3 @@
 #define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
 #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
-
-#endif //REVERSI_SERVER_GLOBALS_H

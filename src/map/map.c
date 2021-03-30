@@ -4,8 +4,8 @@
 
 #include "map.h"
 
-//// Variables
-//////////////
+//// Public variables
+/////////////////////
 struct ListHead capturableStonesHead = SLIST_HEAD_INITIALIZER(capturableStonesHead);
 struct ListHead* capturableStonesHeadPointer = &capturableStonesHead;
 
@@ -17,6 +17,8 @@ int* numberOfStones = NULL;
 int* numberOfOverride = NULL;
 int* numberOfBombs = NULL;
 
+//// Private variables
+//////////////////////
 static const int CORNERS[8][2] = {{0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}};
 
 //// Private functions

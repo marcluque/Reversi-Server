@@ -5,8 +5,7 @@
 // Created with <3 by marcluque, August 2020
 //
 
-#ifndef REVERSI_SERVER_MAP_UTIL_H
-#define REVERSI_SERVER_MAP_UTIL_H
+#pragma once
 
 #include "../globals.h"
 
@@ -14,7 +13,7 @@
 ///////////////////////
 // Define struct for head of list
 SLIST_HEAD(ListHead, Item);
-struct ListHead* capturableStonesHeadPointer;
+extern struct ListHead* capturableStonesHeadPointer;
 struct Item {
     int x;
     int y;
@@ -48,12 +47,12 @@ void transitiontable_cleanUp();
 
 //// Game map variables
 ///////////////////////
-int NUM_PLAYERS;
-int NUM_OVERRIDE;
-int NUM_BOMBS;
-int BOMB_RADIUS;
-int MAP_HEIGHT;
-int MAP_WIDTH;
+extern int NUM_PLAYERS;
+extern int NUM_OVERRIDE;
+extern int NUM_BOMBS;
+extern int BOMB_RADIUS;
+extern int MAP_HEIGHT;
+extern int MAP_WIDTH;
 
 //// Game map util functions
 ////////////////////////////
@@ -105,7 +104,7 @@ static inline void printMap(char** map) {
     }
 }
 
-static inline void printWithCapturedStonesMap(char** map, int startX, int startY) {
+static void printWithCapturedStonesMap(char** map, int startX, int startY) {
     bool captured = false;
     for (int i = 0; i < MAP_HEIGHT; ++i) {
         for (int j = 0; j < MAP_WIDTH; ++j) {
@@ -133,7 +132,7 @@ static inline void printWithCapturedStonesMap(char** map, int startX, int startY
     }
 }
 
-static inline void printNiceMap(char** map, char playerAtTurn) {
+static void printNiceMap(char** map, char playerAtTurn) {
     for (int i = 0; i < MAP_HEIGHT; ++i) {
         for (int j = 0; j < MAP_WIDTH; ++j) {
             // TODO: Print ' to mark as possible move and cyan
@@ -164,5 +163,3 @@ static inline void printNiceMap(char** map, char playerAtTurn) {
         printf("\n");
     }
 }
-
-#endif //REVERSI_SERVER_MAP_UTIL_H

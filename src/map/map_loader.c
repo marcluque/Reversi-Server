@@ -4,8 +4,21 @@
 
 #include "map_loader.h"
 
+//// Private variables
+//////////////////////
 static const int MAX_LINE_LENGTH = 512;
 
+//// Public variables
+/////////////////////
+int NUM_PLAYERS = 0;
+int NUM_OVERRIDE = 0;
+int NUM_BOMBS = 0;
+int BOMB_RADIUS = 0;
+int MAP_HEIGHT = 0;
+int MAP_WIDTH = 0;
+
+//// Public functions
+/////////////////////
 char* map_loader_processMap(char* baseDir, const char* mapName) {
     char* infix = "/";
     char path[1 + strlen(baseDir) + strlen(infix) + strlen(mapName)];
@@ -159,6 +172,6 @@ char* map_loader_processMap(char* baseDir, const char* mapName) {
 
     fclose(file);
 
-    // Dont't free mapString
+    // Don't free mapString
     return mapString;
 }
