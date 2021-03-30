@@ -10,11 +10,12 @@
 //////////////////////
 static int fdCount;
 static struct pollfd* pollFDs = NULL;
-static char* host;
 static char* port;
 static int connectionLimit;
 static int timeLimit;
 static int depthLimit;
+static char* host;
+static int* playerTimeAccounts;
 
 //// Private functions
 //////////////////////
@@ -406,6 +407,15 @@ struct pollfd* server_acceptConnections() {
         }
     }
 
+    if (timeLimit != -1) {
+        // Once all players are connected, initialize time accounts for players
+        playerTimeAccounts = malloc(sizeof(unsigned long long int) * (NUM_PLAYERS + 1));
+        for (int i = 1; i <= NUM_PLAYERS; ++i) {
+            // Every player gets the initial timeLimit
+            playerTimeAccounts[i] = timeLimit;
+        }
+    }
+
     return pollFDs;
 }
 
@@ -486,12 +496,14 @@ int server_startPhase(int phase, int startingPlayer) {
             sendMoveRequest(playerNumber);
             playerLastMove = playerNumber;
 
-            // Wait if time limit is not 0
+
             // waitingTime is in milliseconds
-            int waitingTime = timeLimit == 0 ? -1 : timeLimit;
-            // Add 200 ms to each player for connection lags
-            waitingTime += 200;
+            int waitingTime = timeLimit != -1 ? playerTimeAccounts[playerNumber] : -1;
+            // Add 50 ms to each player for connection lags
+            waitingTime += 50;
             int pollCount = poll(pollFDs, fdCount, waitingTime);
+            // TODO: Get current time and subtract from time account
+
             if (pollCount == -1) {
                 fprintf(stdout, RED "Error while waiting for move of player " BLUE "%i" RESET "!\n", playerNumber);
                 fflush(stdout);

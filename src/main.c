@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
     char* mapName = NULL;
     char* host = "127.0.0.1";
     char* port = "8080";
-    int timeLimit = 0;
+    int timeLimit = -1;
     int depthLimit = 0;
 
     for (int i = 0; i < argc; ++i) {
@@ -38,13 +38,15 @@ int main(int argc, char* argv[]) {
     if (timeLimit == 0 && depthLimit == 0) {
         fprintf(stderr, RED "-timeLimit or -depthLimit is required!" RESET "\n");
         exit(1);
-    } else if (timeLimit < 0.2) {
-        fprintf(stderr, RED "timeLimit has to be >= 0.2!" RESET "\n");
-        exit(1);
-    }
+    } else if (timeLimit != -1) {
+        if (timeLimit < 0.2) {
+            fprintf(stderr, RED "timeLimit has to be >= 0.2!" RESET "\n");
+            exit(1);
+        }
 
-    // Calculate timeLimit from seconds to milliseconds
-    timeLimit *= 1000;
+        // Calculate timeLimit from seconds to milliseconds
+        timeLimit *= 1000;
+    }
 
     // Load map
     char* mapString = map_loader_processMap(argv[0], mapName);
