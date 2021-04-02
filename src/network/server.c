@@ -15,7 +15,7 @@ static int connectionLimit;
 static int timeLimit;
 static int depthLimit;
 static char* host;
-static int* playerTimeAccounts;
+static long int* playerTimeAccounts;
 
 //// Private functions
 //////////////////////
@@ -409,7 +409,7 @@ struct pollfd* server_acceptConnections() {
 
     if (timeLimit != -1) {
         // Once all players are connected, initialize time accounts for players
-        playerTimeAccounts = malloc(sizeof(unsigned long long int) * (NUM_PLAYERS + 1));
+        playerTimeAccounts = malloc(sizeof(long int) * (NUM_PLAYERS + 1));
         for (int i = 1; i <= NUM_PLAYERS; ++i) {
             // Every player gets the initial timeLimit
             playerTimeAccounts[i] = timeLimit;
@@ -496,13 +496,18 @@ int server_startPhase(int phase, int startingPlayer) {
             sendMoveRequest(playerNumber);
             playerLastMove = playerNumber;
 
+            struct timeval begin, end;
+            gettimeofday(&begin, 0);
 
             // waitingTime is in milliseconds
-            int waitingTime = timeLimit != -1 ? playerTimeAccounts[playerNumber] : -1;
+            long int waitingTime = timeLimit != -1 ? playerTimeAccounts[playerNumber] : -1;
             // Add 50 ms to each player for connection lags
             waitingTime += 50;
-            int pollCount = poll(pollFDs, fdCount, waitingTime);
-            // TODO: Get current time and subtract from time account
+            int pollCount = poll(pollFDs, fdCount, (int) waitingTime);
+
+            gettimeofday(&end, 0);
+            long int timeTakenForMove = (end.tv_usec - begin.tv_usec) * 1000;
+            playerTimeAccounts[playerNumber] -= timeTakenForMove;
 
             if (pollCount == -1) {
                 fprintf(stdout, RED "Error while waiting for move of player " BLUE "%i" RESET "!\n", playerNumber);
@@ -512,14 +517,18 @@ int server_startPhase(int phase, int startingPlayer) {
             } else if (pollFDs[playerNumber].revents & POLLIN) {
                 // Player sent a move
                 receiveMove(playerNumber, phase);
+                continue;
+            } else if (playerTimeAccounts[playerNumber] < 0) {
+                // Player took to long for move
+                fprintf(stdout, RED "Player " BLUE "%i" RED " exceeded his time limit" RESET "!\n", playerNumber);
             } else {
                 // Player timed out while doing a move -> disqualify
                 fprintf(stdout, "R0: %i | R1: %i | R2: %i\n", pollFDs[0].revents, pollFDs[1].revents, pollFDs[2].revents);
                 fprintf(stdout, RED "Player " BLUE "%i" RED " timed out while making a move" RESET "! R: %i\n", playerNumber, pollFDs[playerNumber].revents);
-                fflush(stdout);
-                sendDisqualification(playerNumber);
-                continue;
             }
+
+            fflush(stdout);
+            sendDisqualification(playerNumber);
         }
 
         // If no more moves possible the phase is over
@@ -542,6 +551,8 @@ void server_cleanUp() {
     close(pollFDs[0].fd);
 
     free(pollFDs);
+
+    free(playerTimeAccounts);
 }
 
 #pragma clang diagnostic pop
