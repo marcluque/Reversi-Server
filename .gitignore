@@ -6,3 +6,9 @@
 *.iml
 *.iws
 cmake-build-debug/
+
+###############
+##    Misc   ##
+###############
+
+build/
