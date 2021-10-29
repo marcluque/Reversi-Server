@@ -3,7 +3,7 @@ project(reversi_server C)
 
 set(CMAKE_C_STANDARD 11)
 
-include_directories(libs/uthash)
+include_directories(include/uthash)
 
 add_executable(reversi_server
         src/main.c
@@ -13,7 +13,7 @@ add_executable(reversi_server
         src/map/map.h
         src/map/map_util.h
         src/globals.h
-        libs/uthash/uthash.h
+        include/uthash/uthash.h
         src/map/map_loader.c
         src/map/map_loader.h
         src/map/map_util.c)
